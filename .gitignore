@@ -4,6 +4,8 @@
 *.dll
 *.so
 *.dylib
+!**/*.go
+bin/
 
 # Test binary, built with `go test -c`
 *.test
@@ -13,3 +15,44 @@
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
+
+######################
+# Windows
+######################
+
+# Windows image file caches
+Thumbs.db
+
+# Folder config file
+Desktop.ini
+
+######################
+# OSX
+######################
+
+.DS_Store
+.svn
+
+# Thumbnails
+._*
+
+# Files that might appear on external disk
+.Spotlight-V100
+.Trashes
+
+
+######################
+# Eclipse Intellij
+######################
+
+.project
+tmp/**
+tmp/**/*
+*.tmp
+*.bak
+*.swp
+*~.nib
+.classpath
+.settings/
+.idea/*
+*.iml

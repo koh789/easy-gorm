@@ -1,0 +1,14 @@
+# see exmaple
+# https://github.com/golangci/golangci-lint/blob/master/.golangci.example.yml
+run:
+  modules-download-mode: readonly
+  tests: true
+linters:
+  disable-all: true
+  # Enable specific linter
+  # https://golangci-lint.run/usage/linters/#enabled-by-default-linters
+  enable:
+    - revive
+    - gofmt
+    - goimports
+    - govet
