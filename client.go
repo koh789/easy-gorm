@@ -19,42 +19,30 @@ type CRUD[T any, ID comparable, S ~[]T] interface {
 	SaveAll(rs S) (S, error)
 }
 
-// Entity
-// If you want T to have a behavior,
-// define it in Entity and implement it in a struct that is mapped to a table.
-type Entity[T any, ID comparable, S ~[]T] interface {
-	*T
+type CRUDClient[T any, ID comparable, S ~[]T] struct {
+	db *gorm.DB
 }
 
-type CRUDClient[T any, ID comparable, S ~[]T, E Entity[T, ID, S]] struct {
-	reader *gorm.DB
-	writer *gorm.DB
+func NewCRUDClient[T any, ID comparable, S ~[]T](db *gorm.DB) *CRUDClient[T, ID, S] {
+	return &CRUDClient[T, ID, S]{db: db}
 }
 
-func NewCRUDClient[T any, ID comparable, S ~[]T, E Entity[T, ID, S]](reader, writer *gorm.DB) *CRUDClient[T, ID, S, E] {
-	return &CRUDClient[T, ID, S, E]{reader: reader, writer: writer}
+func (c *CRUDClient[T, ID, S]) DB() *gorm.DB {
+	return c.db
 }
 
-func (c *CRUDClient[T, ID, S, E]) Reader() *gorm.DB {
-	return c.reader
-}
-
-func (c *CRUDClient[T, ID, S, E]) Writer() *gorm.DB {
-	return c.writer
-}
-
-func (c *CRUDClient[T, ID, S, E]) FindAll() (S, error) {
+func (c *CRUDClient[T, ID, S]) FindAll() (S, error) {
 	var results S
-	err := c.reader.Find(&results).Error
+	err := c.db.Find(&results).Error
 	return results, err
 }
 
-func (c *CRUDClient[T, ID, S, E]) FindByID(id ID) (*T, error) {
+func (c *CRUDClient[T, ID, S]) FindByID(id ID) (*T, error) {
 	if ContainZeroValues(id) {
 		return nil, nil
 	}
 	var result T
-	err := c.reader.First(&result, id).Error
+	err := c.db.First(&result, id).Error
 	if err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			return nil, nil
@@ -64,7 +52,7 @@ func (c *CRUDClient[T, ID, S, E]) FindByID(id ID) (*T, error) {
 	return &result, err
 }
 
-func (c *CRUDClient[T, ID, S, E]) FindByIDs(ids []ID) (S, error) {
+func (c *CRUDClient[T, ID, S]) FindByIDs(ids []ID) (S, error) {
 	var notEmptyIDs []ID
 	for _, id := range ids {
 		if !ContainZeroValues(id) {
@@ -77,36 +65,36 @@ func (c *CRUDClient[T, ID, S, E]) FindByIDs(ids []ID) (S, error) {
 	t := reflect.TypeOf(notEmptyIDs[0])
 	var results S
 	var err error
-	reader := c.reader
+	db := c.db
 	// Separate processing for embedded PK and primitive types
 	if t.Kind() == reflect.Struct {
 		for _, id := range notEmptyIDs {
-			reader = reader.Or(id)
+			db = db.Or(id)
 		}
-		err = reader.Find(&results).Error
+		err = db.Find(&results).Error
 	} else {
-		err = reader.Find(&results, notEmptyIDs).Error
+		err = db.Find(&results, notEmptyIDs).Error
 	}
 	return results, err
 }
 
-func (c *CRUDClient[T, ID, S, E]) Save(entity *T) (*T, error) {
+func (c *CRUDClient[T, ID, S]) Save(entity *T) (*T, error) {
 	if entity == nil {
 		return nil, nil
 	}
 	entities := []T{*entity}
-	err := c.writer.Save(entities).Error
+	err := c.db.Save(entities).Error
 	if err != nil {
 		return nil, err
 	}
 	return &entities[0], nil
 }
 
-func (c *CRUDClient[T, ID, S, E]) SaveAll(entities S) (S, error) {
+func (c *CRUDClient[T, ID, S]) SaveAll(entities S) (S, error) {
 	if len(entities) == 0 {
 		return nil, nil
 	}
-	err := c.writer.Save(&entities).Error
+	err := c.db.Save(&entities).Error
 	if err != nil {
 		return nil, err
 	}
