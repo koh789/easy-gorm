@@ -1,4 +1,4 @@
-module github.com/koh789/gorm-crud
+module github.com/koh789/easy-gorm
 
 go 1.20
 
